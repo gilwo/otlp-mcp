@@ -36,7 +36,7 @@ help: ## Show this help
 ## Go development
 
 build-local: ## Build otlp-mcp binary locally
-	go build -o otlp-mcp ./cmd/otlp-mcp
+	go build -ldflags "-X main.version=$(VERSION)" -o otlp-mcp ./cmd/otlp-mcp
 
 test: ## Run all tests
 	go test ./...

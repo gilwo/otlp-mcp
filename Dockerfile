@@ -1,10 +1,11 @@
 # Stage 1: Build otlp-mcp from local source
 FROM golang:1.25-alpine AS builder
+ARG VERSION=dev
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o /otlp-mcp ./cmd/otlp-mcp
+RUN go build -ldflags "-X main.version=${VERSION}" -o /otlp-mcp ./cmd/otlp-mcp
 
 # Stage 2: Get otelcol binary from official image
 FROM otel/opentelemetry-collector:0.146.1 AS otelcol

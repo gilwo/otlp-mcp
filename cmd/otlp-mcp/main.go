@@ -15,6 +15,7 @@ var (
 	commit  = "unknown"
 	date    = "unknown"
 )
+// version is set at build time via -ldflags "-X main.version=..."
 
 func main() {
 	fullVersion := fmt.Sprintf("%s (%s, %s)", version, commit, date)

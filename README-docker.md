@@ -27,8 +27,8 @@ docker run --rm -p 4317:4317 -p 4318:4318 -p 9912:9912 ghcr.io/tobert/otlp-mcp:l
 ### Build locally
 
 ```bash
-make build   # Build the image
-make run     # Start the container
+make docker-build   # Build the image
+make docker-run     # Start the container
 ```
 
 Exposes:
@@ -45,7 +45,7 @@ Run otlp-mcp on the host and the proxy in Docker separately:
 make serve
 
 # Terminal 2: Start the HTTP-to-gRPC proxy in Docker
-make proxy
+make docker-proxy
 ```
 
 ## Makefile Targets
@@ -74,20 +74,20 @@ Variables:
 
 ```bash
 # Custom ports
-make run MCP_PORT=8080
+make docker-run MCP_PORT=8080
 
 # Stateless mode
-make run STATELESS=1
+make docker-run STATELESS=1
 
 # Standalone with custom ports
 make serve MCP_PORT=8080 OTLP_PORT=5555
-make proxy OTLP_PORT=5555
+make docker-proxy OTLP_PORT=5555
 
 # Go development
+make build
 make test
 make fmt
 make vet
-make build-local
 ```
 
 ## Loading Existing Telemetry

@@ -1,3 +1,8 @@
+# Version (from git describe)
+VERSION    := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+
 # Ports (override with: make run MCP_PORT=9999 OTLP_PORT=5555)
 MCP_PORT ?= 9912
 OTLP_PORT ?= 4317
@@ -25,6 +30,8 @@ help: ## Show this help
 	@echo "  \033[33mMCP_PORT\033[0m     MCP HTTP port          (default: $(MCP_PORT))"
 	@echo "  \033[33mOTLP_PORT\033[0m    OTLP gRPC port         (default: $(OTLP_PORT))"
 	@echo "  \033[33mSTATELESS\033[0m    Run otlp-mcp stateless (default: off, set to 1 to enable)"
+	@echo ""
+	@echo "Version: $(VERSION) ($(COMMIT))"
 
 ## Go development
 
@@ -43,7 +50,13 @@ vet: ## Run Go vet linter
 ## Docker
 
 build: ## Build all-in-one Docker image (proxy + otlp-mcp)
-	docker build -t $(IMAGE_NAME) .
+	docker build \
+		-t $(IMAGE_NAME):$(VERSION) \
+		-t $(IMAGE_NAME):latest \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg COMMIT=$(COMMIT) \
+		--build-arg BUILD_DATE=$(BUILD_DATE) \
+		.
 
 run: ## Run all-in-one container (proxy + otlp-mcp)
 	@echo "Starting all-in-one container..."

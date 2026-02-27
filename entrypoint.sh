@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+echo "otlp-mcp container ${VERSION:-dev} (started $(date -u +%Y-%m-%dT%H:%M:%SZ))"
+
 MCP_PORT="${MCP_PORT:-9912}"
 OTLP_PORT="${OTLP_PORT:-4317}"
 STATELESS_FLAG=""

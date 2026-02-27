@@ -159,9 +159,30 @@ When no config file is mounted, otlp-mcp uses its built-in defaults (10K traces,
 | `.goreleaser.yml` | Multi-arch release config (binaries, packages, Docker) |
 | `.dockerignore` | Excludes unnecessary files from the Docker build context |
 
+## Versioning
+
+The image version is derived from `git describe --tags --always --dirty` at build time. `make build` automatically:
+
+- Tags the image as `otlp-mcp:<version>` and `otlp-mcp:latest`
+- Embeds the version into OCI labels and the Go binary
+- Logs the version as the first line on container startup
+
+```bash
+# Check image labels
+docker inspect otlp-mcp:latest --format '{{json .Config.Labels}}' | python3 -m json.tool
+
+# Check binary version
+docker run --rm --entrypoint otlp-mcp otlp-mcp:latest --version
+```
+
+## Security
+
+- Container runs as non-root user `otlpmcp` (UID 65532)
+- Alpine base image pinned to `3.21` for reproducible builds
+- OTel Collector pinned to `0.146.1`
+
 ## Notes
 
 - The all-in-one container connects the OTel Collector to otlp-mcp via `localhost`, avoiding Docker networking issues.
 - In standalone mode on macOS Docker Desktop, the Makefile forces IPv4 (`192.168.65.254`) to work around unreachable IPv6 routes via `host.docker.internal`.
 - gRPC compression is disabled (`compression: none`) because otlp-mcp does not support gzip decompression.
-- The OTel Collector image is pinned to version `0.146.1` for reproducible builds.

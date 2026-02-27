@@ -9,7 +9,8 @@ import (
 	cliframework "github.com/urfave/cli/v3"
 )
 
-const version = "0.3.0"
+// version is set at build time via -ldflags "-X main.version=..."
+var version = "dev"
 
 func main() {
 	serveCmd := cli.ServeCommand()

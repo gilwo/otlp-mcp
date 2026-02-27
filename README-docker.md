@@ -23,8 +23,8 @@ gRPC clients bypass the OTel Collector entirely and talk to otlp-mcp directly.
 Single container running both the OTel Collector and otlp-mcp:
 
 ```bash
-make build   # Build the image
-make run     # Start the container
+make docker-build   # Build the image
+make docker-run     # Start the container
 ```
 
 Exposes:
@@ -41,23 +41,23 @@ Run otlp-mcp on the host and the proxy in Docker separately:
 make serve
 
 # Terminal 2: Start the HTTP-to-gRPC proxy in Docker
-make proxy
+make docker-proxy
 ```
 
 ## Makefile Targets
 
 ```
 $ make help
-  help         Show this help
-  build-local  Build otlp-mcp binary locally
-  test         Run all tests
-  fmt          Format Go source files
-  vet          Run Go vet linter
-  build        Build all-in-one Docker image (proxy + otlp-mcp)
-  run          Run all-in-one container (proxy + otlp-mcp)
-  run-bg       Run all-in-one container in background
-  serve        Start otlp-mcp server (host, no Docker)
-  proxy        Start HTTP-to-gRPC proxy only (Docker)
+  help             Show this help
+  build            Build otlp-mcp binary
+  test             Run all tests
+  fmt              Format Go source files
+  vet              Run Go vet linter
+  serve            Start otlp-mcp on the host (no Docker)
+  docker-build     Build all-in-one Docker image
+  docker-run       Run all-in-one container
+  docker-run-bg    Run all-in-one container in background
+  docker-proxy     Start HTTP-to-gRPC proxy only (Docker)
 
 Variables:
   MCP_PORT     MCP HTTP port          (default: 9912)
@@ -69,20 +69,20 @@ Variables:
 
 ```bash
 # Custom ports
-make run MCP_PORT=8080
+make docker-run MCP_PORT=8080
 
 # Stateless mode
-make run STATELESS=1
+make docker-run STATELESS=1
 
 # Standalone with custom ports
 make serve MCP_PORT=8080 OTLP_PORT=5555
-make proxy OTLP_PORT=5555
+make docker-proxy OTLP_PORT=5555
 
 # Go development
+make build
 make test
 make fmt
 make vet
-make build-local
 ```
 
 ## Configuration

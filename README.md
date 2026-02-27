@@ -153,8 +153,8 @@ For HTTP/protobuf support or containerized deployment, an all-in-one Docker
 image bundles otlp-mcp with an OpenTelemetry Collector proxy:
 
 ```bash
-make build   # Build image
-make run     # Start container
+make docker-build   # Build image
+make docker-run     # Start container
 ```
 
 Exposes three ports:

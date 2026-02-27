@@ -1,30 +1,26 @@
-# Version (from git describe)
+# ── Version ──────────────────────────────────────────────────────────
 VERSION    := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
-# Ports (override with: make run MCP_PORT=9999 OTLP_PORT=5555)
-MCP_PORT ?= 9912
+# ── Ports ────────────────────────────────────────────────────────────
+MCP_PORT  ?= 9912
 OTLP_PORT ?= 4317
 
-# Docker Desktop for Mac: host.docker.internal resolves to both IPv4 and IPv6,
-# but IPv6 is unreachable. Force IPv4 via --add-host override.
-HOST_ADDRESS := host.docker.internal
-HOST_IPV4 := 192.168.65.254
-
-# Config file (mount into container if present)
-CONFIG_FILE ?= .otlp-mcp.json
+# ── Docker ───────────────────────────────────────────────────────────
+IMAGE_NAME   := otlp-mcp
+OTEL_IMAGE   := otel/opentelemetry-collector:0.146.1
+CONFIG_FILE  ?= .otlp-mcp.json
 CONFIG_MOUNT := $(if $(wildcard $(CONFIG_FILE)),-v "$(PWD)/$(CONFIG_FILE)":/etc/otlp-mcp/config.json,)
+# Docker Desktop for Mac: force IPv4 for host.docker.internal
+HOST_ADDRESS := host.docker.internal
+HOST_IPV4    := 192.168.65.254
 
-# Images
-OTEL_IMAGE := otel/opentelemetry-collector:0.146.1
-IMAGE_NAME := otlp-mcp
-
-.PHONY: help build-local test fmt vet build run run-bg serve proxy
+.PHONY: help build test fmt vet serve docker-build docker-run docker-run-bg docker-proxy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Variables:"
 	@echo "  \033[33mMCP_PORT\033[0m     MCP HTTP port          (default: $(MCP_PORT))"
@@ -33,9 +29,9 @@ help: ## Show this help
 	@echo ""
 	@echo "Version: $(VERSION) ($(COMMIT))"
 
-## Go development
+# ── Development ──────────────────────────────────────────────────────
 
-build-local: ## Build otlp-mcp binary locally
+build: ## Build otlp-mcp binary
 	go build -ldflags "-X main.version=$(VERSION)" -o otlp-mcp ./cmd/otlp-mcp
 
 test: ## Run all tests
@@ -47,9 +43,15 @@ fmt: ## Format Go source files
 vet: ## Run Go vet linter
 	go vet ./...
 
-## Docker
+serve: ## Start otlp-mcp on the host (no Docker)
+	@echo "Starting otlp-mcp..."
+	@echo "MCP HTTP:  http://localhost:$(MCP_PORT)"
+	@echo "OTLP gRPC: localhost:$(OTLP_PORT)"
+	otlp-mcp serve --transport http --http-port $(MCP_PORT) --otlp-port $(OTLP_PORT) --verbose $(if $(STATELESS),--stateless,)
 
-build: ## Build all-in-one Docker image (proxy + otlp-mcp)
+# ── Docker ───────────────────────────────────────────────────────────
+
+docker-build: ## Build all-in-one Docker image
 	docker build \
 		-t $(IMAGE_NAME):$(VERSION) \
 		-t $(IMAGE_NAME):latest \
@@ -58,7 +60,7 @@ build: ## Build all-in-one Docker image (proxy + otlp-mcp)
 		--build-arg BUILD_DATE=$(BUILD_DATE) \
 		.
 
-run: ## Run all-in-one container (proxy + otlp-mcp)
+docker-run: ## Run all-in-one container
 	@echo "Starting all-in-one container..."
 	@echo "OTLP gRPC: localhost:$(OTLP_PORT)"
 	@echo "OTel HTTP:  http://localhost:4318"
@@ -74,7 +76,7 @@ run: ## Run all-in-one container (proxy + otlp-mcp)
 		$(CONFIG_MOUNT) \
 		$(IMAGE_NAME)
 
-run-bg: ## Run all-in-one container in background
+docker-run-bg: ## Run all-in-one container in background
 	@echo "Starting all-in-one container..."
 	@echo "OTLP gRPC: localhost:$(OTLP_PORT)"
 	@echo "OTel HTTP:  http://localhost:4318"
@@ -90,13 +92,7 @@ run-bg: ## Run all-in-one container in background
 		$(CONFIG_MOUNT) \
 		$(IMAGE_NAME)
 
-serve: ## Start otlp-mcp server (host, no Docker)
-	@echo "Starting otlp-mcp..."
-	@echo "MCP HTTP: http://localhost:$(MCP_PORT)"
-	@echo "OTLP gRPC: localhost:$(OTLP_PORT)"
-	otlp-mcp serve --transport http --http-port $(MCP_PORT) --otlp-port $(OTLP_PORT) --verbose $(if $(STATELESS),--stateless,)
-
-proxy: ## Start HTTP-to-gRPC proxy only (Docker)
+docker-proxy: ## Start HTTP-to-gRPC proxy only (Docker)
 	@echo "Starting OTel Proxy..."
 	@echo "Listening on: http://localhost:4318 (HTTP)"
 	@echo "Forwarding to: $(HOST_ADDRESS):$(OTLP_PORT) (gRPC)"
